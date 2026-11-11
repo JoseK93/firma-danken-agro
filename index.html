@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Firmas Danken Agro</title>
+<style>
+:root{font-family:Arial,sans-serif;color:#283313;background:#f5f7f4}*{box-sizing:border-box}body{margin:0;padding:28px 16px}.wrap{max-width:1050px;margin:auto}h1{font-size:25px;margin:0 0 7px}p{color:#53604c;line-height:1.5}.panel{background:white;border:1px solid #dce3d8;border-radius:14px;padding:22px;margin-top:18px;box-shadow:0 4px 20px #2536140a}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}label{display:block;font-weight:600;font-size:13px}input{width:100%;border:1px solid #c9d3c1;border-radius:7px;padding:11px;margin-top:6px;font-size:15px}input:focus{outline:2px solid #88b820}canvas{width:100%;height:auto;display:block;border:1px solid #e0e6da;background:white}.preview{overflow:auto}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}button{border:0;border-radius:8px;padding:12px 18px;background:#85b81d;color:white;font-weight:bold;cursor:pointer}button.secondary{background:#35421f}button:disabled{opacity:.5;cursor:not-allowed}.note{font-size:13px}#status{font-size:13px;margin-top:12px;min-height:18px}@media(max-width:650px){.fields{grid-template-columns:1fr}.panel{padding:15px}}
+</style>
+</head>
+<body><main class="wrap"><h1>Generador de firmas · Danken Agro</h1><p>Completa tus datos y descarga tu firma personalizada para Gmail u Outlook.</p>
+<section class="panel"><div class="fields">
+<label>Nombre completo<input id="nombre" value="Fabiola Soruco Montaño" maxlength="55"></label>
+<label>Cargo<input id="cargo" value="Gerente de Recursos Humanos y Procesos" maxlength="75"></label>
+<label>Teléfono 1<input id="telefono1" value="+591 622-98541" maxlength="28"></label>
+<label>Teléfono 2<input id="telefono2" value="+591 750-00193" maxlength="28"></label>
+<label>Ubicación<input id="ubicacion" value="Santa Cruz - Bolivia" maxlength="60"></label>
+</div></section>
+<section class="panel"><h2 style="font-size:18px;margin:0 0 14px">Vista previa</h2><div class="preview"><canvas id="firma" width="1250" height="375" aria-label="Vista previa de la firma"></canvas></div>
+<div class="actions"><button id="descargar">Descargar PNG (600 px)</button><button id="descargarGrande" class="secondary">Descargar PNG (1250 px)</button><button id="copiar" class="secondary">Copiar imagen</button></div><div id="status" role="status"></div>
+<p class="note">Para instalarla, inserta el PNG en la configuración de firma de tu correo. El texto se modifica aquí antes de generar la imagen; una vez instalada, la firma es una imagen.</p></section>
+</main>
+<script>
+(()=>{
+'use strict';
+const W=1250,H=375,canvas=document.getElementById('firma'),ctx=canvas.getContext('2d');
+const ids=['nombre','cargo','telefono1','telefono2','ubicacion'];
+const base=new Image();base.crossOrigin='anonymous';
+// El fondo sin textos debe permanecer en la raíz del repositorio, con este nombre exacto.
+base.src='./Fondo%20Firma%20Correo.png';
+let ready=false;
+const status=(msg)=>document.getElementById('status').textContent=msg;
+const val=id=>document.getElementById(id).value.trim();
+const font=(px)=>`${px}px "EuropaNuova-Regular","Europa Nuova","Century Gothic","Trebuchet MS",Arial,sans-serif`;
+function drawFit(text,x,y,maxWidth,initialSize,minSize){
+ let size=initialSize;ctx.font=font(size);
+ while(ctx.measureText(text).width>maxWidth&&size>minSize){size-=.5;ctx.font=font(size)}
+ ctx.fillText(text,x,y,maxWidth);
+}
+function render(){
+ ctx.clearRect(0,0,W,H);
+ if(ready){ctx.drawImage(base,0,0,W,H)}else{ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H)}
+ ctx.fillStyle='#303c13';ctx.textBaseline='alphabetic';
+ drawFit(val('nombre'),462,128,480,29,19);
+ drawFit(val('cargo'),462,160,460,16.5,12);
+ drawFit(val('telefono1'),488,207,320,17,13);
+ drawFit(val('telefono2'),488,235,320,17,13);
+ drawFit(val('ubicacion'),462,276,430,17,13);
+}
+base.onload=()=>{ready=true;render();status('Fondo cargado correctamente.')};
+base.onerror=()=>{ready=false;render();status('No se encontró «Fondo Firma Correo.png». Comprueba que esté junto a index.html en GitHub.')};
+ids.forEach(id=>document.getElementById(id).addEventListener('input',render));
+function output(size){const out=document.createElement('canvas');out.width=size;out.height=Math.round(size*H/W);const c=out.getContext('2d');c.drawImage(canvas,0,0,out.width,out.height);return out}
+function filename(){return 'Firma-Danken-'+(val('nombre').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')||'Empleado')+'.png'}
+function download(size){if(!ready){status('Primero debe cargarse el fondo.');return}const a=document.createElement('a');a.download=filename();a.href=output(size).toDataURL('image/png');a.click();status('Firma descargada.')} 
+document.getElementById('descargar').onclick=()=>download(600);
+document.getElementById('descargarGrande').onclick=()=>download(1250);
+document.getElementById('copiar').onclick=async()=>{if(!ready){status('Primero debe cargarse el fondo.');return}try{const blob=await new Promise(resolve=>output(600).toBlob(resolve,'image/png'));await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);status('Imagen copiada. Pégala en la configuración de firma.')}catch(e){status('El navegador no permitió copiar. Usa «Descargar PNG».')}};
+render();
+})();
+</script></body></html>
